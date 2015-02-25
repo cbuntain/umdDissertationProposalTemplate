@@ -1,0 +1,200 @@
+%
+% code is a LaTeX enviornment to produce code with numbered lines.
+% The lines may be labled for subsequent use in \ref commands.  A
+% related environment, code*, numbers the code like a displayed
+% equation using the counter equation to determine the number.
+% 
+% code has two modes of entry, indented and verbatim.  An example
+% of an indented line of code is
+% 
+% \nl3. Solve the equation $Ax = b$. \\
+% 
+% This line will be indentented by 3*\codeindent.  It's principal use is
+% to present pseudocode that makes free use of LaTeX commands.
+%
+% An example of verbatim code is
+% 
+% \ntt.      for i=1:n \\
+% 
+% The line will be formated as in verbatim mode in the \tt font.  Since
+% spaces at the beginning of a line of code are honored, indentation
+% can be done by inserting spaces, as you would in ordinary code.  The
+% principal use of verbatim mode is to present programs written in a
+% high-level language like C, Matlab, or Fortran.  In both modes each
+% line of code including the last must end with \\ (Actually, the last
+% line in indent mode does not need a \\, but its a good idea to get
+% used to putting it there.)
+%
+% The verbatim mode functions by changing the character codes of the
+% special characters.  It is not quite verbatim, since \ remains the
+% escape character.  The sequence
+%
+% \.
+%
+% will print a backslash (the period is important).  Unfortunately,
+% the verbatim characters are not compatible with most TeX or LaTeX commands
+% (for example, { and } can no longer delimit arguments).  You can leave
+% verbatim mode at any point in a line by typing \>, and return
+% to it by typing \<.  You can also use these commands to enter and
+% exit verbatim mode when entering an indent mode line.
+%
+% The \clable command tags the number of the current line with a lable.
+% The following is an example in indent mode.
+% 
+% \nl2. {\bf For} i = 1 {\bf to} n  \clable{fori} \\
+% 
+% Labling in verbatim mode is only a little more complicated:
+% 
+% \ntt. do i=1,n  \> \clabel{fori} \\
+% 
+% Both modes have commands for producing unnumbered lines (e.g., \ul3.
+% and \utt.), and comment lines (cl3., ctt.) surrounded by a little
+% extra space.  In addition the indent mode has a command for labled
+% statements; e.g.,
+% 
+% \ll2.loop: $x = y^{2}$.
+%
+% Note that the code itself will be indented to accomodate the longest
+% label.
+%
+% The packages also contains a whatever environment that indents its
+% contents by the same amount as the code environment.  The whatever*
+% environment numbers the contents like a displayed equation.
+% In particular, the construction
+%
+%       \begin{whatever}
+%       \begin{verbatim}
+%          . . . . .
+%       \end{verbatim}
+%       \end{whatever}
+%
+% is useful for importing raw code.
+%
+% When importing code for the verbatim mode, there is the problem
+% of how to embed each line between `\ntt. ' and `\\'.  If you
+% use emacs, one way is to define the following keyboard macro
+%
+%       ^A\\ntt. ^E \\\\^N^A 
+%
+% The notation ^A means Control-A, etc.
+%
+% Author G. W. Stewart (www.cs.umd.edu/~stewart/)
+% Dec  8 2004
+
+\newcounter{codeline}           % Counter for line number
+
+\newlength{\numcodesep}         % Space between line number and code
+\setlength{\numcodesep}{1ex}
+
+\newlength{\codeindent}         % Indentation for code lines in indent mode
+\setlength{\codeindent}{3ex}
+
+\newlength{\@codeqnw}           % Width of a display number
+\newlength{\@codempw}           % Width of minipage containing
+                                % code.
+
+% Definition of the code environment
+
+\newenvironment{code}[1][0]{
+\par\noindent\rm
+\setcounter{codeline}{#1}
+\begin{list}{}{
+\setlength{\labelwidth}{0pt}
+\setlength{\labelsep}{0pt}
+\setlength{\leftmargin}{\leftmargini}}\item[]\vspace*{-2.5ex}
+\def\<{\@setuptt.}
+\begin{tabular}{@{}r@{}r@{}l}}{\end{tabular}\end{list}}
+
+% This environment creats numbers its contents like a displayed
+% equation.
+
+\newenvironment{code*}{
+\refstepcounter{equation}
+\settowidth{\@codeqnw}{(\theequation)}
+\setlength{\@codempw}{\linewidth}
+\addtolength{\@codempw}{-\@codeqnw}
+\medskip\par\noindent
+\begin{minipage}[c]{\@codempw}\begin{code}}%
+{\end{code}\end{minipage}{\rm(\theequation)}\medskip}
+
+% The following commands produce lines within the program
+% environment.
+
+% Creates an indendented line of code.
+
+\def\nl#1.{\stepcounter{codeline}\thecodeline.\hspace*{\numcodesep}&
+             &\hspace*{#1\codeindent}}
+
+% Creates labeled line of code in indent mode
+
+\def\ll#1.#2:{\stepcounter{codeline}\thecodeline.\hspace*{\numcodesep}&#2:~
+             &\hspace*{#1\codeindent}}
+
+% Creates and unnumbered line of code in indent mode.
+
+\def\ul#1.{&&\hspace*{#1\codeindent}}
+
+% Creats a comment line with space around it in indent mode.
+
+\def\cl#1.{&&\hspace*{#1\codeindent}\rule[-1.2ex]{0ex}{4ex}}
+
+% Setup for verbatim mode.
+
+\def\@setuptt.{\begingroup%
+\renewcommand{\\}{\endgroup\\}%
+\catcode`\^=12%
+\catcode`\$=12%
+\catcode`\}=12%
+\catcode`\{=12%
+\catcode`\_=12%
+\catcode`\&=12%
+\catcode`\#=12%
+\chardef\@bs=`\\%
+\def\.{\@bs}%
+\def\>{\endgroup}%
+\catcode`\~=12%
+\catcode`\%=12\frenchspacing\tt\obeyspaces}
+
+% Numered line in vebatim mode.
+
+\def\ntt.{\stepcounter{codeline}\thecodeline.\hspace*{\numcodesep}&&%
+\@setuptt.}
+
+% Comment line in verbatime mode.
+
+\def\ctt.{&&\rule[-1.2ex]{0ex}{4ex}\@setuptt.}
+
+% Unnumbered line in verbatim mode.
+
+\def\utt.{&&\@setuptt.}
+
+% A label command for code lines.
+
+\def\refcounter#1{\let\@tempa\protect
+\def\protect{\noexpand\protect\noexpand}%
+\edef\@currentlabel{\csname p@#1\endcsname\csname the#1\endcsname}%
+\let\protect\@tempa}
+\newcommand{\clabel}[1]{\refcounter{codeline}\label{#1}}
+
+% The whatever environment.
+
+\newenvironment{whatever}{
+\par\noindent\rm
+\begin{list}{}{
+\setlength{\labelwidth}{0pt}
+\setlength{\labelsep}{0pt}
+\setlength{\leftmargin}{\leftmargini}}\item[]\vspace*{-2.5ex}}%
+{\end{list}}
+
+% This environment numbers its contents liks a displayed
+% equation.
+
+\newenvironment{whatever*}{
+\refstepcounter{equation}
+\settowidth{\@codeqnw}{(\theequation)}
+\setlength{\@codempw}{\linewidth}
+\addtolength{\@codempw}{-\@codeqnw}
+\addtolength{\@codempw}{-2ex}
+\medskip\par\noindent
+\begin{minipage}[c]{\@codempw}\begin{whatever}}%
+{\end{whatever}\end{minipage}\hspace*{2ex}{\rm(\theequation)}\medskip}
